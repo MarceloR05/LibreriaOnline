@@ -1,15 +1,16 @@
 import { pool } from '../db.js';
 
 // Obtener todos los usuarios
-export const getAllUsers = async (req, res) => {
+export const getAllUsers = async (req, res, next) => {
   try {
     const result = await pool.query('SELECT * FROM usuario ORDER BY id_usuario ASC');
     res.json(result.rows);
   } catch (error) {
     console.error('❌ Error en getAllUsers:', error.message);
-    res.status(500).json({ error: 'Error al obtener los usuarios' });
+    next(error);
   }
 };
+
 
 // Buscar usuario por email
 export const getUserByEmail = async (req, res) => {

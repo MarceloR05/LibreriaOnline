@@ -10,6 +10,8 @@ import {
   filtrarUsuarios 
 } from '../services/usersServices.js';
 
+import { validateUserData } from '../middlewares/validateUserData.js';
+
 const router = express.Router();
 
 // Obtener todos los usuarios
@@ -22,10 +24,10 @@ router.get('/buscarPorEmail/:email', getUserByEmail);
 router.get('/buscarPorNombre/:nombre', getUserByName);
 
 // Crear usuario
-router.post('/', postCrearUsuario);
+router.post('/', validateUserData, postCrearUsuario);
 
 // Actualizar usuario
-router.put('/:id_usuario', actualizarUsuario);
+router.put('/:id_usuario', validateUserData, actualizarUsuario);
 
 // Eliminar usuario
 router.delete('/:id_usuario', eliminarUsuario);
