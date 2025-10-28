@@ -6,6 +6,10 @@ import pedidoRoutes from './routes/pedido.js';
 import itemCarritoRoutes from './routes/itemCarrito.js';
 import direccionRoutes from './routes/direccion.js';
 import pagoRoutes from './routes/pago.js';
+import autorRoutes from './routes/autor.js';
+import detallePedidoRoutes from './routes/detallePedido.js';
+import categoriaRoutes from './routes/categoria.js';
+import libroRoutes from './routes/libro.js';
 
 
 import { errorHandler } from './middlewares/errorHandler.js';
@@ -21,6 +25,10 @@ app.use('/pedido', pedidoRoutes);
 app.use('/itemcarrito', itemCarritoRoutes);
 app.use('/direccion', direccionRoutes);
 app.use('/pago', pagoRoutes);
+app.use('/autor', autorRoutes);
+app.use('/detallepedido', detallePedidoRoutes);
+app.use('/categoria', categoriaRoutes);
+app.use('/libro', libroRoutes);
 
 
 app.get('/', (req, res) => {
