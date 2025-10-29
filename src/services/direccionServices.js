@@ -41,19 +41,26 @@ export const crearDireccion = async (req, res) => {
   try {
     const { id_usuario, calle, ciudad, codigo_postal, pais } = req.body;
 
+    console.log('🏠 Creando nueva dirección...');
+    console.log('📋 Datos recibidos:', { id_usuario, calle, ciudad, codigo_postal, pais });
+
     if (!id_usuario || !calle || !ciudad || !codigo_postal || !pais) {
+      console.log('❌ Faltan campos obligatorios');
       return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
 
+    console.log('📊 Ejecutando consulta SQL...');
     const result = await pool.query(
       `INSERT INTO direccion (id_usuario, calle, ciudad, codigo_postal, pais)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
       [id_usuario, calle, ciudad, codigo_postal, pais]
     );
 
+    console.log('✅ Dirección creada exitosamente:', result.rows[0]);
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('❌ Error en crearDireccion:', error.message);
+    console.error('❌ Stack trace:', error.stack);
     res.status(500).json({ error: 'Error al crear dirección' });
   }
 };

@@ -59,17 +59,69 @@ export const actualizarUsuario = async (req, res) => {
     const { id_usuario } = req.params;
     const { nombre_usuario, email, contrasena_hash, es_administrador } = req.body;
 
-    const result = await pool.query(
-      `UPDATE usuario
-       SET nombre_usuario = $1, email = $2, contrasena_hash = $3, es_administrador = $4
-       WHERE id_usuario = $5 RETURNING *`,
-      [nombre_usuario, email, contrasena_hash, es_administrador, id_usuario]
-    );
+    console.log('📝 Actualizando usuario:', id_usuario);
+    console.log('📋 Datos recibidos:', { nombre_usuario, email, contrasena_hash: contrasena_hash ? '***' : undefined, es_administrador });
 
-    if (result.rows.length === 0) return res.status(404).json({ message: 'Usuario no encontrado' });
+    // Construir la consulta dinámicamente basada en los campos proporcionados
+    const fieldsToUpdate = [];
+    const values = [];
+    let paramCounter = 1;
+
+    if (nombre_usuario !== undefined) {
+      fieldsToUpdate.push(`nombre_usuario = $${paramCounter}`);
+      values.push(nombre_usuario);
+      paramCounter++;
+    }
+
+    if (email !== undefined) {
+      fieldsToUpdate.push(`email = $${paramCounter}`);
+      values.push(email);
+      paramCounter++;
+    }
+
+    if (contrasena_hash !== undefined) {
+      fieldsToUpdate.push(`contrasena_hash = $${paramCounter}`);
+      values.push(contrasena_hash);
+      paramCounter++;
+    }
+
+    if (es_administrador !== undefined) {
+      fieldsToUpdate.push(`es_administrador = $${paramCounter}`);
+      values.push(es_administrador);
+      paramCounter++;
+    }
+
+    // Si no hay campos para actualizar, retornar error
+    if (fieldsToUpdate.length === 0) {
+      console.log('❌ No hay campos para actualizar');
+      return res.status(400).json({ message: 'No hay campos para actualizar' });
+    }
+
+    // Agregar el ID del usuario al final
+    values.push(id_usuario);
+
+    const query = `
+      UPDATE usuario
+      SET ${fieldsToUpdate.join(', ')}
+      WHERE id_usuario = $${paramCounter}
+      RETURNING *
+    `;
+
+    console.log('🔍 Query SQL:', query);
+    console.log('📊 Valores:', values);
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      console.log('❌ Usuario no encontrado');
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    
+    console.log('✅ Usuario actualizado correctamente');
     res.json(result.rows[0]);
   } catch (error) {
     console.error('❌ Error en actualizarUsuario:', error.message);
+    console.error('❌ Stack trace:', error.stack);
     res.status(500).json({ error: 'Error al actualizar usuario' });
   }
 };

@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import userRoutes from './routes/users.js';
 import carritoRoutes from './routes/carrito.js';
@@ -17,6 +18,15 @@ import { errorHandler } from './middlewares/errorHandler.js';
 dotenv.config();
 
 const app = express();
+
+// Configuración de CORS
+app.use(cors({
+  origin: ['http://localhost:8080', 'http://localhost:3000', 'http://127.0.0.1:8080'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
 app.use(express.json());
 
 app.use('/users', userRoutes);
