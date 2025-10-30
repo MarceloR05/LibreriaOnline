@@ -1,10 +1,7 @@
-dotenv.config();
 import pkg from 'pg';
 import dotenv from 'dotenv';
 
-
-console.log('🔹 Variables cargadas:', process.env.PG_USER, process.env.PG_PASSWORD);
-
+dotenv.config();
 
 const { Pool } = pkg;
 

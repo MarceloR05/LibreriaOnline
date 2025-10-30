@@ -3,7 +3,7 @@ import { pool } from '../db.js';
 // Obtener todos los usuarios
 export const getAllUsers = async (req, res, next) => {
   try {
-    const result = await pool.query('SELECT * FROM usuario ORDER BY id_usuario ASC');
+    const result = await pool.query('SELECT id_usuario, nombre_usuario, email, fecha_registro, es_administrador FROM usuario ORDER BY id_usuario ASC');
     res.json(result.rows);
   } catch (error) {
     console.error('❌ Error en getAllUsers:', error.message);
@@ -16,7 +16,7 @@ export const getAllUsers = async (req, res, next) => {
 export const getUserByEmail = async (req, res) => {
   try {
     const { email } = req.params;
-    const result = await pool.query('SELECT * FROM usuario WHERE email = $1', [email]);
+    const result = await pool.query('SELECT id_usuario, nombre_usuario, email, fecha_registro, es_administrador FROM usuario WHERE email = $1', [email]);
     if (result.rows.length === 0) return res.status(404).json({ message: 'Usuario no encontrado' });
     res.json(result.rows[0]);
   } catch (error) {
@@ -59,9 +59,6 @@ export const actualizarUsuario = async (req, res) => {
     const { id_usuario } = req.params;
     const { nombre_usuario, email, contrasena_hash, es_administrador } = req.body;
 
-    console.log('📝 Actualizando usuario:', id_usuario);
-    console.log('📋 Datos recibidos:', { nombre_usuario, email, contrasena_hash: contrasena_hash ? '***' : undefined, es_administrador });
-
     // Construir la consulta dinámicamente basada en los campos proporcionados
     const fieldsToUpdate = [];
     const values = [];
@@ -93,7 +90,6 @@ export const actualizarUsuario = async (req, res) => {
 
     // Si no hay campos para actualizar, retornar error
     if (fieldsToUpdate.length === 0) {
-      console.log('❌ No hay campos para actualizar');
       return res.status(400).json({ message: 'No hay campos para actualizar' });
     }
 
@@ -107,17 +103,12 @@ export const actualizarUsuario = async (req, res) => {
       RETURNING *
     `;
 
-    console.log('🔍 Query SQL:', query);
-    console.log('📊 Valores:', values);
-
     const result = await pool.query(query, values);
 
     if (result.rows.length === 0) {
-      console.log('❌ Usuario no encontrado');
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
     
-    console.log('✅ Usuario actualizado correctamente');
     res.json(result.rows[0]);
   } catch (error) {
     console.error('❌ Error en actualizarUsuario:', error.message);
@@ -143,7 +134,7 @@ export const eliminarUsuario = async (req, res) => {
 export const getUserById = async (req, res) => {
   try {
     const { id_usuario } = req.params;
-    const result = await pool.query('SELECT * FROM usuario WHERE id_usuario = $1', [id_usuario]);
+    const result = await pool.query('SELECT id_usuario, nombre_usuario, email, fecha_registro, es_administrador FROM usuario WHERE id_usuario = $1', [id_usuario]);
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
@@ -159,7 +150,7 @@ export const filtrarUsuarios = async (req, res) => {
   try {
     const { nombre, email, es_administrador } = req.query;
 
-    let query = 'SELECT * FROM usuario WHERE 1=1';
+    let query = 'SELECT id_usuario, nombre_usuario, email, fecha_registro, es_administrador FROM usuario WHERE 1=1';
     const params = [];
 
     if (nombre) {

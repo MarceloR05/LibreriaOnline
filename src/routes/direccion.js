@@ -5,7 +5,8 @@ import {
   getDireccionesByUsuario,
   crearDireccion,
   actualizarDireccion,
-  eliminarDireccion
+  eliminarDireccion,
+  establecerDireccionPredeterminada
 } from '../services/direccionServices.js';
 import { validateDireccionData } from '../middlewares/validateDireccionData.js';
 
@@ -25,6 +26,9 @@ router.post('/', validateDireccionData, crearDireccion);
 
 // Actualizar dirección → middleware de validación
 router.put('/:id_direccion', validateDireccionData, actualizarDireccion);
+
+// Establecer dirección como predeterminada
+router.patch('/:id_direccion/predeterminada', establecerDireccionPredeterminada);
 
 // Eliminar dirección
 router.delete('/:id_direccion', eliminarDireccion);

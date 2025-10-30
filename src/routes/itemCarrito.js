@@ -5,29 +5,37 @@ import {
   getItemsByCarrito,
   crearItemCarrito,
   actualizarItemCarrito,
+  actualizarCantidadItem,
   eliminarItemCarrito
 } from '../services/itemCarritoServices.js';
 
-import { validateItemCarritoData } from '../middlewares/validateItemCarritodata.js';
+import { validateItemCarritoData } from '../middlewares/validateItemCarritoData.js';
+import { validateCantidadUpdate } from '../middlewares/validateCantidadUpdate.js';
+import { authenticateUser } from '../middlewares/authenticateUser.js';
 
 const router = express.Router();
 
+// Rutas públicas (solo para administradores o casos específicos)
 // Obtener todos los items
 router.get('/', getAllItemsCarrito);
 
 // Obtener item por ID
 router.get('/:id_item', getItemCarritoById);
 
-// Obtener items por carrito
-router.get('/carrito/:id_carrito', getItemsByCarrito);
+// Rutas que requieren autenticación
+// Obtener items por carrito (requiere estar logueado)
+router.get('/carrito/:id_carrito', authenticateUser, getItemsByCarrito);
 
-// Crear item → middleware de validación
-router.post('/', validateItemCarritoData, crearItemCarrito);
+// Crear item → requiere autenticación y validación
+router.post('/', authenticateUser, validateItemCarritoData, crearItemCarrito);
 
-// Actualizar item → middleware de validación
-router.put('/:id_item', validateItemCarritoData, actualizarItemCarrito);
+// Actualizar item → requiere autenticación y validación
+router.put('/:id_item', authenticateUser, validateItemCarritoData, actualizarItemCarrito);
 
-// Eliminar item
-router.delete('/:id_item', eliminarItemCarrito);
+// Actualizar solo cantidad → requiere autenticación y validación específica
+router.patch('/:id_item/cantidad', authenticateUser, validateCantidadUpdate, actualizarCantidadItem);
+
+// Eliminar item → requiere autenticación
+router.delete('/:id_item', authenticateUser, eliminarItemCarrito);
 
 export default router;

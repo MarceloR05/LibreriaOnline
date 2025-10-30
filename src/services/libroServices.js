@@ -1,9 +1,26 @@
 import { pool } from '../db.js';
 
-// Obtener todos los libros
+// Obtener todos los libros con información de autor y categoría
 export const getAllLibros = async (req, res, next) => {
   try {
-    const result = await pool.query('SELECT * FROM libro ORDER BY id_libro ASC');
+    const result = await pool.query(`
+      SELECT 
+        l.*,
+        json_build_object(
+          'id_autor', a.id_autor,
+          'nombre', a.nombre,
+          'biografia', a.biografia
+        ) as autor,
+        json_build_object(
+          'id_categoria', c.id_categoria,
+          'nombre', c.nombre,
+          'descripcion', c.descripcion
+        ) as categoria
+      FROM libro l
+      LEFT JOIN autor a ON l.id_autor = a.id_autor
+      LEFT JOIN categoria c ON l.id_categoria = c.id_categoria
+      ORDER BY l.id_libro ASC
+    `);
     res.json(result.rows);
   } catch (error) {
     console.error('❌ Error en getAllLibros:', error.message);
@@ -11,11 +28,29 @@ export const getAllLibros = async (req, res, next) => {
   }
 };
 
-// Buscar libro por ID
+// Buscar libro por ID con información completa
 export const getLibroById = async (req, res) => {
   try {
     const { id_libro } = req.params;
-    const result = await pool.query('SELECT * FROM libro WHERE id_libro = $1', [id_libro]);
+    const result = await pool.query(`
+      SELECT 
+        l.*,
+        json_build_object(
+          'id_autor', a.id_autor,
+          'nombre', a.nombre,
+          'biografia', a.biografia
+        ) as autor,
+        json_build_object(
+          'id_categoria', c.id_categoria,
+          'nombre', c.nombre,
+          'descripcion', c.descripcion
+        ) as categoria
+      FROM libro l
+      LEFT JOIN autor a ON l.id_autor = a.id_autor
+      LEFT JOIN categoria c ON l.id_categoria = c.id_categoria
+      WHERE l.id_libro = $1
+    `, [id_libro]);
+    
     if (result.rows.length === 0) return res.status(404).json({ message: 'Libro no encontrado' });
     res.json(result.rows[0]);
   } catch (error) {
@@ -24,11 +59,30 @@ export const getLibroById = async (req, res) => {
   }
 };
 
-// Buscar libros por ID de Autor
+// Buscar libros por ID de Autor con información completa
 export const getLibrosByAutor = async (req, res) => {
   try {
     const { id_autor } = req.params;
-    const result = await pool.query('SELECT * FROM libro WHERE id_autor = $1 ORDER BY titulo ASC', [id_autor]);
+    const result = await pool.query(`
+      SELECT 
+        l.*,
+        json_build_object(
+          'id_autor', a.id_autor,
+          'nombre', a.nombre,
+          'biografia', a.biografia
+        ) as autor,
+        json_build_object(
+          'id_categoria', c.id_categoria,
+          'nombre', c.nombre,
+          'descripcion', c.descripcion
+        ) as categoria
+      FROM libro l
+      LEFT JOIN autor a ON l.id_autor = a.id_autor
+      LEFT JOIN categoria c ON l.id_categoria = c.id_categoria
+      WHERE l.id_autor = $1 
+      ORDER BY l.titulo ASC
+    `, [id_autor]);
+    
     if (result.rows.length === 0) return res.status(404).json({ message: 'No se encontraron libros para este autor' });
     res.json(result.rows);
   } catch (error) {
@@ -37,11 +91,30 @@ export const getLibrosByAutor = async (req, res) => {
   }
 };
 
-// Buscar libros por ID de Categoría
+// Buscar libros por ID de Categoría con información completa
 export const getLibrosByCategoria = async (req, res) => {
   try {
     const { id_categoria } = req.params;
-    const result = await pool.query('SELECT * FROM libro WHERE id_categoria = $1 ORDER BY titulo ASC', [id_categoria]);
+    const result = await pool.query(`
+      SELECT 
+        l.*,
+        json_build_object(
+          'id_autor', a.id_autor,
+          'nombre', a.nombre,
+          'biografia', a.biografia
+        ) as autor,
+        json_build_object(
+          'id_categoria', c.id_categoria,
+          'nombre', c.nombre,
+          'descripcion', c.descripcion
+        ) as categoria
+      FROM libro l
+      LEFT JOIN autor a ON l.id_autor = a.id_autor
+      LEFT JOIN categoria c ON l.id_categoria = c.id_categoria
+      WHERE l.id_categoria = $1 
+      ORDER BY l.titulo ASC
+    `, [id_categoria]);
+    
     if (result.rows.length === 0) return res.status(404).json({ message: 'No se encontraron libros para esta categoría' });
     res.json(result.rows);
   } catch (error) {

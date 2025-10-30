@@ -36,27 +36,95 @@ export const getDireccionesByUsuario = async (req, res) => {
   }
 };
 
+// Obtener dirección predeterminada del usuario
+export const getDireccionPredeterminada = async (id_usuario) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM direccion WHERE id_usuario = $1 AND es_predeterminada = true LIMIT 1',
+      [id_usuario]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error('❌ Error en getDireccionPredeterminada:', error.message);
+    throw error;
+  }
+};
+
+// Crear dirección predeterminada automática
+export const crearDireccionPredeterminada = async (id_usuario) => {
+  try {
+    // Verificar si ya tiene dirección predeterminada
+    const direccionExistente = await getDireccionPredeterminada(id_usuario);
+    if (direccionExistente) {
+      return direccionExistente;
+    }
+
+    // Crear dirección predeterminada básica
+    const result = await pool.query(
+      `INSERT INTO direccion (id_usuario, calle, ciudad, codigo_postal, pais, es_predeterminada)
+       VALUES ($1, $2, $3, $4, $5, true) RETURNING *`,
+      [id_usuario, 'Dirección sin especificar', 'Ciudad sin especificar', '00000', 'País sin especificar']
+    );
+
+    return result.rows[0];
+  } catch (error) {
+    console.error('❌ Error en crearDireccionPredeterminada:', error.message);
+    throw error;
+  }
+};
+
+// Establecer dirección como predeterminada
+export const establecerDireccionPredeterminada = async (req, res) => {
+  try {
+    const { id_direccion } = req.params;
+    const { id_usuario } = req.body;
+
+    // Quitar predeterminada de todas las direcciones del usuario
+    await pool.query(
+      'UPDATE direccion SET es_predeterminada = false WHERE id_usuario = $1',
+      [id_usuario]
+    );
+
+    // Establecer la nueva dirección como predeterminada
+    const result = await pool.query(
+      'UPDATE direccion SET es_predeterminada = true WHERE id_direccion = $1 RETURNING *',
+      [id_direccion]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Dirección no encontrada' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('❌ Error en establecerDireccionPredeterminada:', error.message);
+    res.status(500).json({ error: 'Error al establecer dirección predeterminada' });
+  }
+};
+
 // Crear nueva dirección
 export const crearDireccion = async (req, res) => {
   try {
-    const { id_usuario, calle, ciudad, codigo_postal, pais } = req.body;
-
-    console.log('🏠 Creando nueva dirección...');
-    console.log('📋 Datos recibidos:', { id_usuario, calle, ciudad, codigo_postal, pais });
+    const { id_usuario, calle, ciudad, codigo_postal, pais, es_predeterminada = false } = req.body;
 
     if (!id_usuario || !calle || !ciudad || !codigo_postal || !pais) {
-      console.log('❌ Faltan campos obligatorios');
       return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
 
-    console.log('📊 Ejecutando consulta SQL...');
+    // Si se marca como predeterminada, quitar predeterminada de otras direcciones
+    if (es_predeterminada) {
+      await pool.query(
+        'UPDATE direccion SET es_predeterminada = false WHERE id_usuario = $1',
+        [id_usuario]
+      );
+    }
+
     const result = await pool.query(
-      `INSERT INTO direccion (id_usuario, calle, ciudad, codigo_postal, pais)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [id_usuario, calle, ciudad, codigo_postal, pais]
+      `INSERT INTO direccion (id_usuario, calle, ciudad, codigo_postal, pais, es_predeterminada)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [id_usuario, calle, ciudad, codigo_postal, pais, es_predeterminada]
     );
 
-    console.log('✅ Dirección creada exitosamente:', result.rows[0]);
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('❌ Error en crearDireccion:', error.message);
@@ -69,13 +137,21 @@ export const crearDireccion = async (req, res) => {
 export const actualizarDireccion = async (req, res) => {
   try {
     const { id_direccion } = req.params;
-    const { id_usuario, calle, ciudad, codigo_postal, pais } = req.body;
+    const { id_usuario, calle, ciudad, codigo_postal, pais, es_predeterminada = false } = req.body;
+
+    // Si se marca como predeterminada, quitar predeterminada de otras direcciones
+    if (es_predeterminada) {
+      await pool.query(
+        'UPDATE direccion SET es_predeterminada = false WHERE id_usuario = $1',
+        [id_usuario]
+      );
+    }
 
     const result = await pool.query(
       `UPDATE direccion
-       SET id_usuario = $1, calle = $2, ciudad = $3, codigo_postal = $4, pais = $5
-       WHERE id_direccion = $6 RETURNING *`,
-      [id_usuario, calle, ciudad, codigo_postal, pais, id_direccion]
+       SET id_usuario = $1, calle = $2, ciudad = $3, codigo_postal = $4, pais = $5, es_predeterminada = $6
+       WHERE id_direccion = $7 RETURNING *`,
+      [id_usuario, calle, ciudad, codigo_postal, pais, es_predeterminada, id_direccion]
     );
 
     if (result.rows.length === 0) return res.status(404).json({ message: 'Dirección no encontrada' });
